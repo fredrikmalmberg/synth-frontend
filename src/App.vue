@@ -1,4 +1,28 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <h1>Welcome to Your Vue.js App</h1>
+  <v-app>
+    <v-main>
+      <SynthController/>
+    </v-main>
+  </v-app>
 </template>
+
+<script>
+import SynthController from './components/SynthComponent.vue'
+
+export default {
+  name: 'App',
+
+  components: {
+    SynthController,
+  },
+
+  data: () => ({
+    //
+  }),
+}
+</script>
+<style>
+html{
+font-family: "arial";
+}
+</style>

@@ -1,0 +1,5 @@
+{
+    "/api/select_bank/*": "/$1",
+    "/api/select_patch/*": "/$1",
+    "/api/*": "/$1"
+  }
