@@ -1,58 +1,90 @@
 <template>
   <v-container v-if="this.bankList" class="fill-height">
+    <v-row class="topbar">
+      <h1>Fluid Synth</h1>
+      <v-btn
+        class="shutdownButton"
+        right
+        icon="mdi-power"
+        color="secondary"
+        @click="this.shutdownSynth"
+      ></v-btn>
+    </v-row>
     <v-row class="statusBar">
       <v-col cols="12">
-        <h3>Synth Info</h3>
-        Current bank:
-        <div v-if="this.currentBankName">
-          {{ this.currentBankName }} ({{ this.currentBankNumber + 1 }}/{{
+        Current bank
+        <h2 v-if="this.currentBankName">
+          {{ this.currentBankName.split('.')[0] }} ({{ this.currentBankNumber + 1 }}/{{
             this.bankList.length
           }})
-        </div>
+        </h2>
         <div v-else>Loading..</div>
-        <br />
-        Current patch:
+
+        Current patch
         <div v-if="this.currentPatchName">
-          {{ this.currentPatchName }} ({{ this.currentPatchNumber + 1 }}/{{
-            this.patchList.length
-          }})
+          <h2>
+            {{ this.currentPatchName }} ({{ this.currentPatchNumber + 1 }}/{{
+              this.patchList.length
+            }})
+          </h2>
         </div>
         <div v-else>Loading..</div>
       </v-col>
     </v-row>
-    <v-row class="bankSelector">
-      <v-col v-if="this.bankList" cols="12">
-        <v-btn @click="setBank(1)" width="50%" height="70">Bank up</v-btn
-        ><v-btn @click="setBank(-1)" width="50%" height="70">Bank down</v-btn>
+    <v-row class="settings">
+      
+      <v-col cols="12">
+        Synth Settings
+        <div v-for="(item, index) in this.settingsArr" v-bind:key="index">
+          {{ item[0].split('.')[0].toUpperCase()}} {{item[0].split('.')[1].toUpperCase() }}:
+          
+          <input class="slider"
+            type="range"
+            @change="setSettingValue(item[0])"
+            min="0"
+            max="1"
+            step="0.05"
+            v-model="item[1]"
+          /> <b>{{ item[1] }}</b>
+        </div>
       </v-col>
     </v-row>
     <v-row class="selector">
       <v-select
         v-model="select"
-        label="Select"
+        label="Select Patch"
         :items="this.patchList"
         variant="underlined"
       ></v-select>
-      <label for="cars">Choose a car:</label>
-
-      <select name="Patch" id="patch">
-        <option value="volvo">Volvo</option>
-        <option value="saab">Saab</option>
-        <option value="mercedes">Mercedes</option>
-        <option value="audi">Audi</option>
-      </select>
+    </v-row>
+    <v-row class="selector">
+      <v-select
+        v-model="selectB"
+        label="Select Bank"
+        :items="this.bankList"
+        variant="underlined"
+      ></v-select>
     </v-row>
   </v-container>
   <v-container v-else> Big Loader... </v-container>
 </template>
 
 <script>
-import { getData, selectBank, selectPatch } from "../fluidIntegration.js";
+import {
+  getData,
+  selectBank,
+  selectPatch,
+  shutdown,
+  getSetting,
+  setSetting,
+} from "../fluidIntegration.js";
 export default {
   name: "SynthController",
   data() {
     return {
       select: null,
+      selectB: null,
+      reverbSlider: null,
       patchList: null,
       patchKeys: null,
       bankList: null,
@@ -60,13 +92,19 @@ export default {
       currentPatchNumber: null,
       currentBankName: null,
       currentBankNumber: null,
-      promise: null,
+      reverb: null,
+      settingsArr: [
+        ["reverb.level", 0.5],
+        ["reverb.width", 0.2],
+        ["reverb.room-size", 0.5],
+      ],
     };
   },
   mounted() {
     getData()
       .then((response) => response.json())
       .then(this.setAllValuesFromData);
+    this.getSettingValues();
   },
   watch: {
     select(newValue) {
@@ -76,9 +114,48 @@ export default {
       selectPatch(newValue[0] - 1)
         .then((response) => response.json())
         .then(this.setPatchFromData);
+      this.getSettingValues();
+    },
+    selectB(newValue) {
+      let bankIdx = this.bankList.findIndex((el) => el === newValue);
+      this.patchList = null;
+      this.patchKeys = null;
+      this.currentPatchName = null;
+      this.currentPatchNumber = null;
+      this.currentBankName = null;
+      this.currentBankNumber = null;
+      selectBank(bankIdx)
+        .then((response) => response.json())
+        .then(this.setBankFromData);
     },
   },
   methods: {
+    getSettingValues() {
+      this.settingsArr.forEach((element) => {
+        this.getSettingValue(element[0]);
+      });
+    },
+    getSettingValue(option) {
+      let idx = this.settingsArr.findIndex((el) => el[0] === option);
+      getSetting(option)
+        .then((response) => response.json())
+        .then((newValue) => (this.settingsArr[idx][1] = newValue))
+        .then(() =>
+          console.log(
+            option + " updated from API to be: " + this.settingsArr[idx][1]
+          )
+        );
+    },
+
+    setSettingValue(option) {
+      console.log("changed slider for " + option);
+      let newValue = this.settingsArr.find((el) => el[0] === option)[1];
+      setSetting(option, newValue).then(() => this.getSettingValue(option));
+    },
+    shutdownSynth() {
+      console.log("shutting down");
+      shutdown();
+    },
     setAllValuesFromData(data) {
       this.patchList = data[0];
       this.patchKeys = Array.from(Array(this.patchList.length).keys());
@@ -127,19 +204,49 @@ export default {
   },
 };
 </script>
-<style scoped>
+<style>
 .statusBar {
-  height: 50%;
+  height: 20%;
   display: block;
+  margin-top: 70px;
 }
 .bankSelector {
-  position: absolute;
-  bottom: 120px;
   width: 100%;
 }
 .selector {
+  width: 80%;
+  margin-left: 10%;
+}
+.topbar {
+  background-color: rgb(95, 95, 156);
+  color: white;
+  padding: 10px;
+}
+.shutdownButton {
   position: absolute;
-  bottom: 50px;
-  width: 100%;
+  right: 13px;
+}
+.bankButton {
+  width: 45%;
+  height: 70px;
+  margin: 5% 0% 0% 5%;
+}
+.slider {
+  width: 80%;
+    margin-left: 5%;
+    border: solid 2px #5f5f9c;
+    border-radius: 8px;
+    height: 7px;
+    outline: none;
+    appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  appearance: none;
+  cursor: ew-resize;
+  background: #00d2be;
 }
 </style>
