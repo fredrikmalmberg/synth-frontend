@@ -26,10 +26,10 @@ It should return something like:
 [[[1,". Abbey-Steinway"],[2,". UprightPianoKW"]],["Good GM.yaml","Pianos-Lite.yaml","Rhodes.yaml","bank2.yaml"],0,"Pianos-Lite.yaml",6]
 ```
 ### Setup for the frontend:
-1. Copy all the files from the dist folder in this repo to a location on your RPI
-2. Serve that directory as a website using any webserver you like. The easiest solution is to use the built in python server which works ok as this is not a production website we are building. Make sure this starts every time the RPI is rebooted.
+1. Copy all the files from the dist folder in this repo to a location on your RPI 
+2. Serve that directory as a website using any webserver you like. The easiest solution is to use the built in python server which works ok as this is not a production website we are building. Make sure this starts every time the RPI is rebooted. For example by adding the following to an .sh file that is run at startup in the correct directory:
 ```sudo python -m http.server 8000```
 
-Now you should be able to access the frontend using your phone or other device at <IP goes here>:8000
+Now you should be able to access the frontend using your phone or other device at ```<IP goes here>:8000```
 
 
