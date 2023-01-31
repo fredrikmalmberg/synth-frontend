@@ -1,5 +1,5 @@
-const BASE_URL = "http://192.168.1.143:5000/api";
-
+const BASE_IP = self.location.hostname;
+const BASE_URL = "http://"+BASE_IP+":5000/api";
 function getData() {
   const complete_url = BASE_URL + "/";
   return fetch(complete_url);
